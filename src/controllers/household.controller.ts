@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import Household from "../models/household.schema";
+import Household from "../models/schemas/household.schema";
 import {
   changeNegativeToEmpty,
   changeEmptyToNegative,
