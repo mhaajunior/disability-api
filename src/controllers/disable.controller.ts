@@ -12,7 +12,7 @@ const importDisable = (req: Request, res: Response) => {
 
   if (!file) {
     const err = NewCommonError(code.IMPORT_FILE_NOT_VALID);
-    return res.status(HttpStatusCode[<number>err.code]).send({ ...err });
+    res.status(HttpStatusCode[<number>err.code]).send({ ...err });
   }
 
   const { err } = disableService.uploadDataToMongo(

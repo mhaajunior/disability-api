@@ -3,6 +3,7 @@ import { parse } from "@fast-csv/parse";
 import File from "../models/schemas/file.schema";
 import Household from "../models/schemas/household.schema";
 import Member from "../models/schemas/member.schema";
+import Inconsist from "../models/schemas/inconsist.schema";
 import code from "../resource/common.code";
 import {
   household,
@@ -179,7 +180,6 @@ const uploadDataToMongo = (filePath: string, fileName: string) => {
             },
             iden,
             file_id: file,
-            status: "pending",
           });
 
           await member.save();
@@ -189,7 +189,6 @@ const uploadDataToMongo = (filePath: string, fileName: string) => {
             const household = new Household({
               fields: householdObj,
               iden,
-              status: "pending",
               file_id: file,
             });
 
@@ -219,9 +218,11 @@ const fetchFilesfromMongo = async () => {
 
 const deleteDatafromMongo = async (fileId: string) => {
   try {
+    //PENDING DO: move to cron
     await File.findByIdAndRemove(fileId);
     await Household.deleteMany({ file_id: fileId });
     await Member.deleteMany({ file_id: fileId });
+    await Inconsist.deleteMany({ file_id: fileId });
     return { err: NewCommonError(code.SUCCESS) };
   } catch (err) {
     return { err: NewCommonError(code.ERR_INTERNAL) };

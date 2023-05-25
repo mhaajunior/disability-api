@@ -23,7 +23,6 @@ const householdSchema = new Schema({
   },
   iden: { type: String, required: true },
   file_id: { type: Schema.Types.ObjectId, ref: "File", required: true },
-  status: { type: String, required: true },
 });
 
 export default mongoose.model("Household", householdSchema);

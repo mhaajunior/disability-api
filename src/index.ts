@@ -6,9 +6,9 @@ import * as dotenv from "dotenv";
 import * as http from "http";
 import * as bodyparser from "body-parser";
 
-import householdRoutes from "./routes/household.route";
 import disableRoutes from "./routes/disable.route";
 import consistencyRoutes from "./routes/consistency.route";
+import memberRoutes from "./routes/member.route";
 
 dotenv.config();
 
@@ -56,9 +56,9 @@ app.use(
 app.use(multer({ storage: fileStorage, fileFilter }).single("fileData"));
 app.use(cors());
 
-app.use("/households", householdRoutes);
 app.use("/disables", disableRoutes);
 app.use("/consistencies", consistencyRoutes);
+app.use("/members", memberRoutes);
 
 app.get("/", (req: Request, res: Response) => {
   res.status(200).send("Server up and running!");
