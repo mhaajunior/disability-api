@@ -22,4 +22,13 @@ const fetchMemberById = async (req: Request, res: Response) => {
   res.status(HttpStatusCode[<number>err.code]).send({ data, ...err });
 };
 
-export { fetchMembers, fetchMemberById };
+const editMember = async (req: Request, res: Response) => {
+  const memberId = req.params.id;
+  const memberForm = req.body;
+
+  const { err } = await memberService.updateMemberToMongo();
+
+  res.status(HttpStatusCode[<number>err.code]).send({ ...err });
+};
+
+export { fetchMembers, fetchMemberById, editMember };

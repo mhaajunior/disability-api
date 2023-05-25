@@ -76,4 +76,8 @@ const fetchMemberByIdfromMongo = async (member_id: string) => {
   }
 };
 
-export { fetchMembersfromMongo, fetchMemberByIdfromMongo };
+const updateMemberToMongo = async () => {
+  return { err: NewCommonError(code.SUCCESS) };
+};
+
+export { fetchMembersfromMongo, fetchMemberByIdfromMongo, updateMemberToMongo };
