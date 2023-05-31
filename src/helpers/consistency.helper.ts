@@ -839,7 +839,423 @@ const validateStep3 = (o: IStep3, f6: number) => {
   return { codes: err_code, fields: [...new Set(err_field)] };
 };
 
-const validateStep4 = (o: IStep4) => {
+const validateStep4 = (o: IStep4, f6: number) => {
+  const err_code: string[] = [];
+  const err_field: string[] = [];
+
+  if (
+    f6 >= 2 &&
+    f6 <= 4 &&
+    (o["f20"] === "" ||
+      o["f23"] === "" ||
+      o["f26"] === "" ||
+      o["f30"] === "" ||
+      o["f31"] === "" ||
+      o["f32"] === "" ||
+      o["f33"] === "" ||
+      o["f34"] === "" ||
+      o["f35"] === "" ||
+      o["f36"] === "")
+  ) {
+    err_code.push("PART4-1");
+  }
+  if (
+    (f6 < 2 || f6 > 4) &&
+    (o["f20"] !== "" ||
+      o["f21"] !== "" ||
+      o["f22"] !== "" ||
+      o["f23"] !== "" ||
+      o["f24"] !== "" ||
+      o["f25"] !== "" ||
+      o["f26"] !== "" ||
+      o["f27"] !== "" ||
+      o["f28"] !== "" ||
+      o["f29"] !== "" ||
+      o["f30"] !== "" ||
+      o["f31"] !== "" ||
+      o["f32"] !== "" ||
+      o["f33"] !== "" ||
+      o["f34"] !== "" ||
+      o["f35"] !== "" ||
+      o["f36"] !== "")
+  ) {
+    err_code.push("PART4-2");
+  }
+  if (o["f20"] === "1" && (o["f21"] === "" || o["f22"] !== "")) {
+    err_code.push("F20-1");
+  }
+  if (o["f20"] === "2" && (o["f21"] !== "" || o["f22"] === "")) {
+    err_code.push("F20-2");
+  }
+  if (o["f20"] === "" && (o["f21"] !== "" || o["f22"] !== "")) {
+    err_code.push("F20-3");
+  }
+  if (o["f23"] === "1" && (o["f24"] === "" || o["f25"] !== "")) {
+    err_code.push("F23-1");
+  }
+  if (o["f23"] === "2" && (o["f24"] !== "" || o["f25"] === "")) {
+    err_code.push("F23-2");
+  }
+  if (o["f23"] === "" && (o["f24"] !== "" || o["f25"] !== "")) {
+    err_code.push("F23-3");
+  }
+  if (
+    o["f26"] === "1" &&
+    (o["f27"] === "" || o["f28"] === "" || o["f29"] !== "")
+  ) {
+    err_code.push("F26-1");
+  }
+  if (
+    o["f26"] === "2" &&
+    (o["f27"] !== "" || o["f28"] !== "" || o["f29"] === "")
+  ) {
+    err_code.push("F26-2");
+  }
+  if (
+    o["f26"] === "" &&
+    (o["f27"] !== "" || o["f28"] !== "" || o["f29"] !== "")
+  ) {
+    err_code.push("F26-3");
+  }
+  if (o["f28"] === "3" && o["f27"] !== "3" && o["f27"] !== "4") {
+    err_code.push("F28-1");
+  }
+  if (o["f28"] === "4" && o["f27"] !== "4") {
+    err_code.push("F28-2");
+  }
+  if (o["f34"] === "4" && o["f35"] !== "8") {
+    err_code.push("F35-1");
+  }
+
+  if (err_code.length === 0) {
+    return;
+  }
+  err_code.forEach((value: string) => {
+    err_field.push(...consistErrCode[value as keyof typeof consistErrCode]);
+  });
+
+  return { codes: err_code, fields: [...new Set(err_field)] };
+};
+
+const validateStep5 = (o: IStep5, f6: number) => {
+  const err_code: string[] = [];
+  const err_field: string[] = [];
+
+  if (
+    f6 >= 5 &&
+    f6 <= 17 &&
+    (o["f37"] === "" ||
+      o["f40"] === "" ||
+      o["f43"] === "" ||
+      o["f50"] === "" ||
+      o["f51"] === "" ||
+      o["f52"] === "" ||
+      o["f53"] === "" ||
+      o["f54"] === "" ||
+      o["f55"] === "" ||
+      o["f56"] === "" ||
+      o["f57"] === "" ||
+      o["f58"] === "" ||
+      o["f59"] === "" ||
+      o["f60"] === "")
+  ) {
+    err_code.push("PART5-1");
+  }
+  if (
+    (f6 < 5 || f6 > 17) &&
+    (o["f37"] !== "" ||
+      o["f38"] !== "" ||
+      o["f39"] !== "" ||
+      o["f40"] !== "" ||
+      o["f41"] !== "" ||
+      o["f42"] !== "" ||
+      o["f43"] !== "" ||
+      o["f44"] !== "" ||
+      o["f45"] !== "" ||
+      o["f46"] !== "" ||
+      o["f47"] !== "" ||
+      o["f48"] !== "" ||
+      o["f49"] !== "" ||
+      o["f50"] !== "" ||
+      o["f51"] !== "" ||
+      o["f52"] !== "" ||
+      o["f53"] !== "" ||
+      o["f54"] !== "" ||
+      o["f55"] !== "" ||
+      o["f56"] !== "" ||
+      o["f57"] !== "" ||
+      o["f58"] !== "" ||
+      o["f59"] !== "" ||
+      o["f60"] !== "")
+  ) {
+    err_code.push("PART5-2");
+  }
+  if (o["f37"] === "1" && (o["f38"] === "" || o["f39"] !== "")) {
+    err_code.push("F37-1");
+  }
+  if (o["f37"] === "2" && (o["f38"] !== "" || o["f39"] === "")) {
+    err_code.push("F37-2");
+  }
+  if (o["f37"] === "" && (o["f38"] !== "" || o["f39"] !== "")) {
+    err_code.push("F37-3");
+  }
+  if (o["f40"] === "1" && (o["f41"] === "" || o["f42"] !== "")) {
+    err_code.push("F40-1");
+  }
+  if (o["f40"] === "2" && (o["f41"] !== "" || o["f42"] === "")) {
+    err_code.push("F40-2");
+  }
+  if (o["f40"] === "" && (o["f41"] !== "" || o["f42"] !== "")) {
+    err_code.push("F40-3");
+  }
+  if (
+    o["f43"] === "1" &&
+    (o["f44"] === "" || o["f46"] === "" || o["f48"] !== "" || o["f49"] !== "")
+  ) {
+    err_code.push("F43-1");
+  }
+  if (
+    o["f43"] === "2" &&
+    (o["f44"] !== "" ||
+      o["f45"] !== "" ||
+      o["f46"] !== "" ||
+      o["f47"] !== "" ||
+      o["f48"] == "")
+  ) {
+    err_code.push("F43-2");
+  }
+  if (
+    o["f43"] === "" &&
+    (o["f44"] !== "" ||
+      o["f45"] !== "" ||
+      o["f46"] !== "" ||
+      o["f47"] !== "" ||
+      o["f48"] == "" ||
+      o["f49"] == "")
+  ) {
+    err_code.push("F43-3");
+  }
+  if (o["f44"] === "2" && o["f45"] === "") {
+    err_code.push("F43-4");
+  }
+  if (
+    (o["f44"] === "3" || o["f44"] === "4" || o["f44"] === "") &&
+    o["f45"] !== ""
+  ) {
+    err_code.push("F43-5");
+  }
+  if ((o["f46"] === "1" || o["f46"] === "2") && o["f47"] === "") {
+    err_code.push("F43-6");
+  }
+  if ((o["f46"] === "3" || o["f46"] === "4") && o["f47"] !== "") {
+    err_code.push("F43-7");
+  }
+  if ((o["f48"] === "1" || o["f48"] === "2") && o["f49"] === "") {
+    err_code.push("F43-8");
+  }
+  if ((o["f48"] === "3" || o["f48"] === "4") && o["f49"] !== "") {
+    err_code.push("F43-9");
+  }
+  if (o["f47"] === "1" && o["f46"] !== "1") {
+    err_code.push("F47-1");
+  }
+  if (o["f49"] === "1" && o["f48"] !== "1") {
+    err_code.push("F49-1");
+  }
+  if (
+    (o["f51"] === "3" || o["f51"] === "4") &&
+    o["f52"] !== "3" &&
+    o["f52"] !== "4"
+  ) {
+    err_code.push("F52-1");
+  }
+
+  if (err_code.length === 0) {
+    return;
+  }
+  err_code.forEach((value: string) => {
+    err_field.push(...consistErrCode[value as keyof typeof consistErrCode]);
+  });
+
+  return { codes: err_code, fields: [...new Set(err_field)] };
+};
+
+const validateStep6 = (o: IStep6, f6: number) => {
+  const err_code: string[] = [];
+  const err_field: string[] = [];
+
+  if (
+    f6 >= 18 &&
+    (o["f61"] === "" ||
+      o["f62"] === "" ||
+      o["f63"] === "" ||
+      o["f65"] === "" ||
+      o["f66"] === "" ||
+      o["f67"] === "" ||
+      o["f75"] === "" ||
+      o["f77"] === "" ||
+      o["f80"] === "" ||
+      o["f81"] === "" ||
+      o["f82"] === "" ||
+      o["f86"] === "" ||
+      o["f90"] === "" ||
+      o["f91"] === "" ||
+      o["f92"] === "" ||
+      o["f93"] === "" ||
+      o["f95"] === "" ||
+      o["f96"] === "" ||
+      o["f98"] === "")
+  ) {
+    err_code.push("PART6-1");
+  }
+  if (
+    f6 < 18 &&
+    (o["f61"] !== "" ||
+      o["f62"] !== "" ||
+      o["f63"] !== "" ||
+      o["f64"] !== "" ||
+      o["f65"] !== "" ||
+      o["f66"] !== "" ||
+      o["f67"] !== "" ||
+      o["f68"] !== "" ||
+      o["f69"] !== "" ||
+      o["f70"] !== "" ||
+      o["f71"] !== "" ||
+      o["f72"] !== "" ||
+      o["f73"] !== "" ||
+      o["f74"] !== "" ||
+      o["f75"] !== "" ||
+      o["f76"] !== "" ||
+      o["f77"] !== "" ||
+      o["f78"] !== "" ||
+      o["f79"] !== "" ||
+      o["f80"] !== "" ||
+      o["f81"] !== "" ||
+      o["f82"] !== "" ||
+      o["f83"] !== "" ||
+      o["f84"] !== "" ||
+      o["f85"] !== "" ||
+      o["f86"] !== "" ||
+      o["f87"] !== "" ||
+      o["f88"] !== "" ||
+      o["f89"] !== "" ||
+      o["f90"] !== "" ||
+      o["f91"] !== "" ||
+      o["f92"] !== "" ||
+      o["f93"] !== "" ||
+      o["f94"] !== "" ||
+      o["f95"] !== "" ||
+      o["f96"] !== "" ||
+      o["f97"] !== "" ||
+      o["f98"] !== "")
+  ) {
+    err_code.push("PART6-2");
+  }
+  if (o["f63"] === "1" && o["f64"] === "") {
+    err_code.push("F63-1");
+  }
+  if (
+    (o["f63"] === "2" || o["f63"] === "7" || o["f63"] === "9") &&
+    o["f64"] !== ""
+  ) {
+    err_code.push("F63-2");
+  }
+  if (o["f66"] === "4" && (o["f75"] !== "4" || o["f77"] !== "4")) {
+    err_code.push("F66-1");
+  }
+  if (
+    (o["f66"] === "2" || o["f66"] === "3") &&
+    o["f75"] !== "2" &&
+    o["f75"] !== "3" &&
+    o["f75"] !== "4" &&
+    o["f77"] !== "2" &&
+    o["f77"] !== "3" &&
+    o["f77"] !== "4"
+  ) {
+    err_code.push("F66-2");
+  }
+  if (o["f75"] === "1" && o["f77"] === "1" && o["f66"] !== "1") {
+    err_code.push("F66-3");
+  }
+  if (
+    (o["f75"] === "2" || o["f75"] === "3") &&
+    (o["f77"] === "2" || o["f77"] === "3") &&
+    o["f66"] !== "2" &&
+    o["f66"] !== "3"
+  ) {
+    err_code.push("F66-4");
+  }
+  if (
+    (o["f75"] === "4" || o["f77"] === "4") &&
+    o["f66"] !== "2" &&
+    o["f66"] !== "3" &&
+    o["f66"] !== "4"
+  ) {
+    err_code.push("F66-5");
+  }
+  if (
+    o["f67"] === "1" &&
+    (o["f68"] === "" ||
+      o["f69"] === "" ||
+      o["f70"] === "" ||
+      o["f71"] === "" ||
+      o["f72"] === "" ||
+      o["f73"] === "" ||
+      o["f74"] === "")
+  ) {
+    err_code.push("F67-1");
+  }
+  if (
+    (o["f67"] === "2" ||
+      o["f67"] === "7" ||
+      o["f67"] === "9" ||
+      o["f67"] === "") &&
+    (o["f68"] !== "" ||
+      o["f69"] !== "" ||
+      o["f70"] !== "" ||
+      o["f71"] !== "" ||
+      o["f72"] !== "" ||
+      o["f73"] !== "" ||
+      o["f74"] !== "")
+  ) {
+    err_code.push("F67-2");
+  }
+  if (
+    o["f67"] === "1" &&
+    o["f68"] !== "1" &&
+    o["f69"] !== "1" &&
+    o["f70"] !== "1" &&
+    o["f71"] !== "1" &&
+    o["f72"] !== "1" &&
+    o["f73"] !== "1" &&
+    o["f74"] !== "1"
+  ) {
+    err_code.push("F67-3");
+  }
+  if (["1", "2", "3", "7", "9"].includes(o["f75"]) && o["f76"] === "") {
+    err_code.push("F75-1");
+  }
+  if (["4", ""].includes(o["f75"]) && o["f76"] !== "") {
+    err_code.push("F75-2");
+  }
+  if (o["f76"] === "1" && o["f75"] !== "1") {
+    err_code.push("F76-1");
+  }
+  if (o["f76"] === "2" && o["f75"] !== "1" && o["f75"] !== "2") {
+    err_code.push("F76-2");
+  }
+
+  if (err_code.length === 0) {
+    return;
+  }
+  err_code.forEach((value: string) => {
+    err_field.push(...consistErrCode[value as keyof typeof consistErrCode]);
+  });
+
+  return { codes: err_code, fields: [...new Set(err_field)] };
+};
+
+const validateStep7 = (o: IStep7, f6: number) => {
   const err_code: string[] = [];
   const err_field: string[] = [];
 
@@ -853,7 +1269,7 @@ const validateStep4 = (o: IStep4) => {
   return { codes: err_code, fields: [...new Set(err_field)] };
 };
 
-const validateStep5 = (o: IStep5) => {
+const validateStep8 = (o: IStep8, f6: number) => {
   const err_code: string[] = [];
   const err_field: string[] = [];
 
@@ -867,7 +1283,7 @@ const validateStep5 = (o: IStep5) => {
   return { codes: err_code, fields: [...new Set(err_field)] };
 };
 
-const validateStep6 = (o: IStep6) => {
+const validateStep9 = (o: IStep9, f6: number) => {
   const err_code: string[] = [];
   const err_field: string[] = [];
 
@@ -881,7 +1297,7 @@ const validateStep6 = (o: IStep6) => {
   return { codes: err_code, fields: [...new Set(err_field)] };
 };
 
-const validateStep7 = (o: IStep7) => {
+const validateStep10 = (o: IStep10, f6: number) => {
   const err_code: string[] = [];
   const err_field: string[] = [];
 
@@ -895,49 +1311,7 @@ const validateStep7 = (o: IStep7) => {
   return { codes: err_code, fields: [...new Set(err_field)] };
 };
 
-const validateStep8 = (o: IStep8) => {
-  const err_code: string[] = [];
-  const err_field: string[] = [];
-
-  if (err_code.length === 0) {
-    return;
-  }
-  err_code.forEach((value: string) => {
-    err_field.push(...consistErrCode[value as keyof typeof consistErrCode]);
-  });
-
-  return { codes: err_code, fields: [...new Set(err_field)] };
-};
-
-const validateStep9 = (o: IStep9) => {
-  const err_code: string[] = [];
-  const err_field: string[] = [];
-
-  if (err_code.length === 0) {
-    return;
-  }
-  err_code.forEach((value: string) => {
-    err_field.push(...consistErrCode[value as keyof typeof consistErrCode]);
-  });
-
-  return { codes: err_code, fields: [...new Set(err_field)] };
-};
-
-const validateStep10 = (o: IStep10) => {
-  const err_code: string[] = [];
-  const err_field: string[] = [];
-
-  if (err_code.length === 0) {
-    return;
-  }
-  err_code.forEach((value: string) => {
-    err_field.push(...consistErrCode[value as keyof typeof consistErrCode]);
-  });
-
-  return { codes: err_code, fields: [...new Set(err_field)] };
-};
-
-const validateStep11 = (o: IStep11) => {
+const validateStep11 = (o: IStep11, f6: number) => {
   const err_code: string[] = [];
   const err_field: string[] = [];
 

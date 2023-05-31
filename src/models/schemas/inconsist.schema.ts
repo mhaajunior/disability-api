@@ -5,6 +5,7 @@ const inconsistSchema = new Schema({
   iden: { type: String, required: true },
   file_id: { type: String, required: true },
   total_errors: { type: Number, required: true },
+  edit_datetime: { type: Date },
   inconsist: {
     step1: {
       codes: [

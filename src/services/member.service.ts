@@ -3,6 +3,7 @@ import Member from "../models/schemas/member.schema";
 import Inconsist from "../models/schemas/inconsist.schema";
 import code from "../resource/common.code";
 import mongoose from "mongoose";
+import { IMember } from "../models/dto/disability.dto";
 
 const fetchMembersfromMongo = async (file_id: string, iden: string) => {
   try {
@@ -76,8 +77,38 @@ const fetchMemberByIdfromMongo = async (member_id: string) => {
   }
 };
 
-const updateMemberToMongo = async () => {
-  return { err: NewCommonError(code.SUCCESS) };
+const updateMemberToMongo = async (member_id: string, member_form: IMember) => {
+  try {
+    const ObjectId = mongoose.Types.ObjectId;
+    const doc: any = await Member.findOneAndUpdate(
+      { _id: new ObjectId(member_id) },
+      { fields: member_form },
+      { new: true }
+    );
+    return { data: doc, err: NewCommonError(code.SUCCESS) };
+  } catch (err) {
+    return { data: err, err: NewCommonError(code.ERR_INTERNAL) };
+  }
 };
 
-export { fetchMembersfromMongo, fetchMemberByIdfromMongo, updateMemberToMongo };
+const updateEditDate = async (member_id: string) => {
+  try {
+    const count = await Inconsist.countDocuments({ member_id });
+    if (count > 0) {
+      await Inconsist.findOneAndUpdate(
+        { member_id },
+        { edit_datetime: new Date() }
+      );
+    }
+    return { err: NewCommonError(code.SUCCESS) };
+  } catch (err) {
+    return { err: NewCommonError(code.ERR_INTERNAL) };
+  }
+};
+
+export {
+  fetchMembersfromMongo,
+  fetchMemberByIdfromMongo,
+  updateMemberToMongo,
+  updateEditDate,
+};

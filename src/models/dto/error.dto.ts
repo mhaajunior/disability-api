@@ -5,7 +5,7 @@ export interface CommonError {
   message?: string;
 }
 
-export interface Inconsist {
+export interface IInconsist {
   step1?: { codes: string[]; fields: string[] };
   step2?: { codes: string[]; fields: string[] };
   step3?: { codes: string[]; fields: string[] };
@@ -19,12 +19,13 @@ export interface Inconsist {
   step11?: { codes: string[]; fields: string[] };
 }
 
-export interface MemberError {
+export interface IMemberError {
   member_id: string;
   iden: string;
   file_id: string;
   total_errors: Number;
-  inconsist: Inconsist;
+  inconsist: IInconsist;
+  edit_datetime?: Date;
 }
 
 export const NewCommonError = (
