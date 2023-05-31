@@ -1030,8 +1030,8 @@ const validateStep5 = (o: IStep5, f6: number) => {
       o["f45"] !== "" ||
       o["f46"] !== "" ||
       o["f47"] !== "" ||
-      o["f48"] == "" ||
-      o["f49"] == "")
+      o["f48"] !== "" ||
+      o["f49"] !== "")
   ) {
     err_code.push("F43-3");
   }
@@ -1160,7 +1160,7 @@ const validateStep6 = (o: IStep6, f6: number) => {
   ) {
     err_code.push("F63-2");
   }
-  if (o["f66"] === "4" && (o["f75"] !== "4" || o["f77"] !== "4")) {
+  if (o["f66"] === "4" && o["f75"] !== "4" && o["f77"] !== "4") {
     err_code.push("F66-1");
   }
   if (
