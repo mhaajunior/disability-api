@@ -25,7 +25,6 @@ export interface IMemberError {
   file_id: string;
   total_errors: Number;
   inconsist: IInconsist;
-  edit_datetime?: Date;
 }
 
 export const NewCommonError = (

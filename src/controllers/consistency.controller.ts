@@ -14,8 +14,18 @@ const consistencyCheck = async (req: Request, res: Response) => {
         !["12", "13", "21", "22", "23", "24"].includes(household.fields.enum)
       ) {
         //start loop member
+        //check between members
+        const errorBetMem = consistencyService.checkBetweenMembers(
+          household.members
+        );
+
+        //validate 11 steps
         for (const member of household.members) {
-          const { err } = await consistencyService.consistencyCheck(member);
+          const { err } = await consistencyService.consistencyCheck(
+            member,
+            household.fields.members,
+            errorBetMem
+          );
           if (err.code !== code.SUCCESS) {
             res.status(HttpStatusCode[<number>err.code]).send({ ...err });
           }

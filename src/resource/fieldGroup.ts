@@ -195,6 +195,20 @@ const step11 = [
   "id_code2",
 ];
 
+const memberField = {
+  step1,
+  step2,
+  step3,
+  step4,
+  step5,
+  step6,
+  step7,
+  step8,
+  step9,
+  step10,
+  step11,
+};
+
 export {
   household,
   step1,
@@ -208,4 +222,5 @@ export {
   step9,
   step10,
   step11,
+  memberField,
 };

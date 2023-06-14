@@ -21,6 +21,12 @@ import {
   validateStep9,
 } from "../helpers/consistency.helper";
 
+interface IErrorBetMem {
+  leadAge: number;
+  checkH19: boolean;
+  checkH11: boolean;
+}
+
 const aggregateFile = async (file_id: string) => {
   try {
     const file = await File.find({ _id: file_id });
@@ -126,22 +132,48 @@ const fetchHouseholdViaStatus = async (file_id: string) => {
       if (res[0].status === "pending") {
         return { data: "pending", err: NewCommonError(code.SUCCESS) };
       } else if (res[0].status === "error") {
+        const ObjectId = mongoose.Types.ObjectId;
         const inconsist = await Inconsist.aggregate([
-          { $match: { file_id: file_id } },
+          { $match: { file_id } },
           {
             $group: {
               _id: "$iden",
               totalMemErrors: { $sum: 1 },
               overallErrors: { $sum: "$total_errors" },
-              editDatetime: {
-                $last: {
-                  $dateToString: {
-                    format: "%Y-%m-%d %H:%M:%S",
-                    date: "$edit_datetime",
-                    timezone: "Asia/Bangkok",
+            },
+          },
+          {
+            $lookup: {
+              from: "households",
+              let: { iden: "$_id", file_id: new ObjectId(file_id) },
+              pipeline: [
+                {
+                  $match: {
+                    $expr: {
+                      $and: [
+                        { $eq: ["$file_id", "$$file_id"] },
+                        { $eq: ["$iden", "$$iden"] },
+                      ],
+                    },
                   },
                 },
+              ],
+              as: "households",
+            },
+          },
+          { $unwind: "$households" },
+          {
+            $project: {
+              editDatetime: {
+                $dateToString: {
+                  format: "%Y-%m-%d %H:%M:%S",
+                  date: "$households.edit_datetime",
+                  timezone: "Asia/Bangkok",
+                },
               },
+              totalMemErrors: 1,
+              overallErrors: 1,
+              _id: 1,
             },
           },
           { $sort: { _id: 1 } },
@@ -158,8 +190,12 @@ const fetchHouseholdViaStatus = async (file_id: string) => {
   }
 };
 
-const consistencyCheck = async (member: any) => {
-  const checkStep1 = validateStep1(member.fields.step1);
+const consistencyCheck = async (
+  member: any,
+  h_members: string,
+  errorBetMem: IErrorBetMem
+) => {
+  const checkStep1 = validateStep1(member.fields.step1, errorBetMem.leadAge);
   const checkStep2 = validateStep2(
     member.fields.step2,
     parseInt(member.fields.step1.f6)
@@ -182,23 +218,38 @@ const consistencyCheck = async (member: any) => {
   );
   const checkStep7 = validateStep7(
     member.fields.step7,
-    parseInt(member.fields.step1.f6)
+    parseInt(member.fields.step1.f6),
+    member.fields.step5.f50,
+    member.fields.step6.f86,
+    h_members,
+    member.fields.step1.f5
   );
   const checkStep8 = validateStep8(
     member.fields.step8,
-    parseInt(member.fields.step1.f6)
+    parseInt(member.fields.step1.f6),
+    member.fields.step4,
+    member.fields.step5,
+    member.fields.step6
   );
   const checkStep9 = validateStep9(
     member.fields.step9,
-    parseInt(member.fields.step1.f6)
+    parseInt(member.fields.step1.f6),
+    member.fields.step4,
+    member.fields.step5,
+    member.fields.step6,
+    member.fields.step8
   );
   const checkStep10 = validateStep10(
     member.fields.step10,
-    parseInt(member.fields.step1.f6)
+    parseInt(member.fields.step1.f6),
+    member.fields.step9,
+    parseInt(member.fields.step3.f15)
   );
   const checkStep11 = validateStep11(
     member.fields.step11,
-    parseInt(member.fields.step1.f6)
+    parseInt(member.fields.step1.f1),
+    errorBetMem.checkH19,
+    errorBetMem.checkH11
   );
 
   let errors: IInconsist = {};
@@ -264,7 +315,7 @@ const consistencyCheck = async (member: any) => {
       return { err: NewCommonError(code.ERR_INTERNAL) };
     }
   } else {
-    // if has previous error in db, delete it
+    // check if having previous error in db, delete it
     try {
       await deleteErrorRow(member._id);
       return { err: NewCommonError(code.SUCCESS) };
@@ -272,6 +323,35 @@ const consistencyCheck = async (member: any) => {
       return { err: NewCommonError(code.ERR_INTERNAL) };
     }
   }
+};
+
+const checkBetweenMembers = (members: any) => {
+  let checkH19,
+    checkH11 = false;
+  let leadAge = 0;
+  for (const member of members) {
+    if (member.fields.step1.f4 === "01") {
+      leadAge = parseInt(member.fields.step1.f6);
+    }
+    if (!checkH19) {
+      if (
+        ["01", "09"].includes(member.fields.step10.f136) ||
+        ["02", "03", "04", "05", "06", "07", "08", "09", "10"].includes(
+          member.fields.step10.f137
+        )
+      ) {
+        checkH19 = true;
+      }
+    }
+    if (!checkH11) {
+      if (member.fields.step10.f131 === "2") {
+        checkH11 = true;
+      }
+    }
+  }
+
+  const data: IErrorBetMem = { checkH19, checkH11, leadAge };
+  return data;
 };
 
 export {
@@ -282,4 +362,5 @@ export {
   findAndUpdateFile,
   fetchHouseholdViaStatus,
   consistencyCheck,
+  checkBetweenMembers,
 };
