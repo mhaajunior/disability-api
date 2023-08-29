@@ -1,11 +1,13 @@
-import { Request, Response } from "express";
+import { Response } from "express";
+import asyncHandler from "express-async-handler";
 import * as memberService from "../services/member.service";
 import * as consistencyService from "../services/consistency.service";
 import { HttpStatusCode } from "../resource/common.code";
-import code from "../resource/common.code";
 import { memberField } from "../resource/fieldGroup";
+import { checkBetweenMembers } from "../helpers/consistency.helper";
+import { IRequest } from "../models/dto/request.dto";
 
-const fetchMembers = async (req: Request, res: Response) => {
+const fetchMembers = asyncHandler(async (req: IRequest, res: Response) => {
   const file_id = <string>req.query.file_id;
   const iden = <string>req.query.iden;
 
@@ -15,9 +17,9 @@ const fetchMembers = async (req: Request, res: Response) => {
   );
 
   res.status(HttpStatusCode[<number>err.code]).send({ data, ...err });
-};
+});
 
-const fetchMemberById = async (req: Request, res: Response) => {
+const fetchMemberById = asyncHandler(async (req: IRequest, res: Response) => {
   const member_id = req.params.id;
 
   const { data, err } = await memberService.fetchMemberByIdfromMongo(member_id);
@@ -43,51 +45,36 @@ const fetchMemberById = async (req: Request, res: Response) => {
   }
 
   res.status(HttpStatusCode[<number>err.code]).send({ data, ...err });
-};
+});
 
-const editMember = async (req: Request, res: Response) => {
+const editMember = asyncHandler(async (req: IRequest, res: Response) => {
   const memberId = req.params.id;
   const memberForm = req.body;
 
   // delete old errors
-  const { err } = await consistencyService.deleteErrorRow(memberId);
-  if (err.code !== code.SUCCESS) {
-    res.status(HttpStatusCode[<number>err.code]).send({ ...err });
-  } else {
-    // update new member values
-    const { data, err } = await memberService.updateMemberToMongo(
-      memberId,
-      memberForm
-    );
-    if (err.code !== code.SUCCESS) {
-      res.status(HttpStatusCode[<number>err.code]).send({ ...err });
-    } else {
-      // consistency check
-      const { data: membersObj, err } =
-        await memberService.fetchMembersfromMongo(
-          data.member.file_id.toString(),
-          data.member.iden
-        );
-      if (err.code !== code.SUCCESS) {
-        res.status(HttpStatusCode[<number>err.code]).send({ ...err });
-      } else {
-        const errorBetMem = consistencyService.checkBetweenMembers(
-          membersObj.members
-        );
+  await consistencyService.deleteErrorRow(memberId);
 
-        const { err } = await consistencyService.consistencyCheck(
-          data.member,
-          data.household.fields.members,
-          errorBetMem
-        );
-        if (err.code !== code.SUCCESS) {
-          res.status(HttpStatusCode[<number>err.code]).send({ ...err });
-        }
-      }
-    }
-  }
+  // update new member values
+  const { data } = await memberService.updateMemberToMongo(
+    memberId,
+    memberForm
+  );
+
+  // consistency check
+  const { data: membersObj } = await memberService.fetchMembersfromMongo(
+    data.member.file_id.toString(),
+    data.member.iden
+  );
+
+  const errorBetMem = checkBetweenMembers(membersObj.members);
+
+  const { err } = await consistencyService.consistencyCheck(
+    data.member,
+    data.household.fields.members,
+    errorBetMem
+  );
 
   res.status(HttpStatusCode[<number>err.code]).send({ ...err });
-};
+});
 
 export { fetchMembers, fetchMemberById, editMember };

@@ -1,55 +1,52 @@
-import { Request, Response } from "express";
+import { Response } from "express";
+import asyncHandler from "express-async-handler";
 import * as consistencyService from "../services/consistency.service";
 import { HttpStatusCode } from "../resource/common.code";
-import code from "../resource/common.code";
+import { checkBetweenMembers } from "../helpers/consistency.helper";
+import { IRequest } from "../models/dto/request.dto";
 
-const consistencyCheck = async (req: Request, res: Response) => {
+const consistencyCheck = asyncHandler(async (req: IRequest, res: Response) => {
   const file_id = <string>req.query.id;
-  const { data, err } = await consistencyService.aggregateFile(file_id);
+  const { data } = await consistencyService.aggregateFile(file_id);
 
-  if (err.code === code.SUCCESS) {
-    for (const household of data.households) {
-      //start loop household
-      if (
-        !["12", "13", "21", "22", "23", "24"].includes(household.fields.enum)
-      ) {
-        //start loop member
-        //check between members
-        const errorBetMem = consistencyService.checkBetweenMembers(
-          household.members
+  for (const household of data.households) {
+    //start loop household
+    if (!["12", "13", "21", "22", "23", "24"].includes(household.fields.enum)) {
+      //start loop member
+      //check between members
+      const errorBetMem = checkBetweenMembers(household.members);
+
+      //validate 11 steps
+      for (const member of household.members) {
+        await consistencyService.consistencyCheck(
+          member,
+          household.fields.members,
+          errorBetMem
         );
-
-        //validate 11 steps
-        for (const member of household.members) {
-          const { err } = await consistencyService.consistencyCheck(
-            member,
-            household.fields.members,
-            errorBetMem
-          );
-          if (err.code !== code.SUCCESS) {
-            res.status(HttpStatusCode[<number>err.code]).send({ ...err });
-          }
-        }
-        //end loop member
       }
+      //end loop member
     }
-    //end loop household
-    const { err } = await consistencyService.findAndUpdateFile(file_id);
-
-    res.status(HttpStatusCode[<number>err.code]).send({ ...err });
-  } else {
-    res.status(HttpStatusCode[<number>err.code]).send({ ...err });
   }
-};
+  //end loop household
+  const { err } = await consistencyService.findAndUpdateFile(file_id);
 
-const fetchErrorHousehold = async (req: Request, res: Response) => {
-  const file_id = <string>req.query.id;
+  res.status(HttpStatusCode[<number>err.code]).send({ ...err });
+});
 
-  const { data, err } = await consistencyService.fetchHouseholdViaStatus(
-    file_id
-  );
+const fetchErrorHousehold = asyncHandler(
+  async (req: IRequest, res: Response) => {
+    const file_id = <string>req.query.id;
+    const page_no = <string>req.query.pageNo;
+    const per_page = <string>req.query.perPage;
 
-  res.status(HttpStatusCode[<number>err.code]).send({ data, ...err });
-};
+    const { data, err } = await consistencyService.fetchHouseholdViaStatus(
+      file_id,
+      parseInt(page_no),
+      parseInt(per_page)
+    );
+
+    res.status(HttpStatusCode[<number>err.code]).send({ data, ...err });
+  }
+);
 
 export { consistencyCheck, fetchErrorHousehold };

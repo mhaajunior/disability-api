@@ -19,7 +19,7 @@ import {
   step8,
   step9,
 } from "../resource/fieldGroup";
-import { NewCommonError } from "../models/dto/error.dto";
+import { NewCommonError, isNull } from "../helpers/commom.helper";
 import { IHousehold, IDisability, IMember } from "../models/dto/disability.dto";
 import {
   IStep1,
@@ -34,9 +34,13 @@ import {
   IStep8,
   IStep9,
 } from "../models/dto/member.dto";
-import { isNull } from "../helpers/commom.helper";
+import { ObjectId } from "mongoose";
 
-const uploadDataToMongo = (filePath: string, fileName: string) => {
+const uploadDataToMongo = async (
+  filePath: string,
+  fileName: string,
+  user_id: ObjectId
+) => {
   let stream = fs.createReadStream(filePath);
   let csvData: IDisability[] = [];
 
@@ -50,29 +54,13 @@ const uploadDataToMongo = (filePath: string, fileName: string) => {
           name: fileName.split(".")[0],
           rows: rowCount,
           status: "pending",
+          user_id,
         });
 
         await file.save();
         const iden_arr: string[] = [];
         for (const row of csvData) {
           let iden: string = "";
-          let obj: IDisability = {
-            reg: "",
-            cwt: "",
-            amp: "",
-            tmb: "",
-            area: "",
-            ea: "",
-            vil: "",
-            psu_no: "",
-            ea_set: "",
-            month: "",
-            yr: "",
-            hh_no: "",
-            list_gr: "",
-            listing: "",
-            enum: "",
-          };
           let householdObj: IHousehold = {
             reg: "",
             cwt: "",
@@ -105,62 +93,62 @@ const uploadDataToMongo = (filePath: string, fileName: string) => {
 
           for (const key in row) {
             if (household.includes(key)) {
-              householdObj[key as keyof typeof householdObj] = isNull(
-                row[key as keyof typeof obj]
+              householdObj[key as keyof IHousehold] = isNull(
+                row[key as keyof IDisability]
               );
             } else if (step1.includes(key)) {
-              step1Obj[key as keyof typeof step1Obj] = isNull(
-                row[key as keyof typeof obj]
+              step1Obj[key as keyof IStep1] = isNull(
+                row[key as keyof IDisability]
               );
             } else if (step2.includes(key)) {
-              step2Obj[key as keyof typeof step2Obj] = isNull(
-                row[key as keyof typeof obj]
+              step2Obj[key as keyof IStep2] = isNull(
+                row[key as keyof IDisability]
               );
             } else if (step3.includes(key)) {
-              step3Obj[key as keyof typeof step3Obj] = isNull(
-                row[key as keyof typeof obj]
+              step3Obj[key as keyof IStep3] = isNull(
+                row[key as keyof IDisability]
               );
             } else if (step4.includes(key)) {
-              step4Obj[key as keyof typeof step4Obj] = isNull(
-                row[key as keyof typeof obj]
+              step4Obj[key as keyof IStep4] = isNull(
+                row[key as keyof IDisability]
               );
             } else if (step5.includes(key)) {
-              step5Obj[key as keyof typeof step5Obj] = isNull(
-                row[key as keyof typeof obj]
+              step5Obj[key as keyof IStep5] = isNull(
+                row[key as keyof IDisability]
               );
             } else if (step6.includes(key)) {
-              step6Obj[key as keyof typeof step6Obj] = isNull(
-                row[key as keyof typeof obj]
+              step6Obj[key as keyof IStep6] = isNull(
+                row[key as keyof IDisability]
               );
             } else if (step7.includes(key)) {
-              step7Obj[key as keyof typeof step7Obj] = isNull(
-                row[key as keyof typeof obj]
+              step7Obj[key as keyof IStep7] = isNull(
+                row[key as keyof IDisability]
               );
             } else if (step8.includes(key)) {
-              step8Obj[key as keyof typeof step8Obj] = isNull(
-                row[key as keyof typeof obj]
+              step8Obj[key as keyof IStep8] = isNull(
+                row[key as keyof IDisability]
               );
             } else if (step9.includes(key)) {
-              step9Obj[key as keyof typeof step9Obj] = isNull(
-                row[key as keyof typeof obj]
+              step9Obj[key as keyof IStep9] = isNull(
+                row[key as keyof IDisability]
               );
             } else if (step10.includes(key)) {
-              step10Obj[key as keyof typeof step10Obj] = isNull(
-                row[key as keyof typeof obj]
+              step10Obj[key as keyof IStep10] = isNull(
+                row[key as keyof IDisability]
               );
             } else if (step11.includes(key)) {
-              step11Obj[key as keyof typeof step11Obj] = isNull(
-                row[key as keyof typeof obj]
+              step11Obj[key as keyof IStep11] = isNull(
+                row[key as keyof IDisability]
               );
             } else {
-              memberObj[key as keyof typeof memberObj] = isNull(
-                row[key as keyof typeof obj]
+              memberObj[key as keyof IMember] = isNull(
+                row[key as keyof IDisability]
               );
             }
           }
 
           for (const key in householdObj) {
-            iden += householdObj[key as keyof typeof householdObj];
+            iden += householdObj[key as keyof IHousehold];
           }
 
           const member = new Member({
@@ -204,15 +192,15 @@ const uploadDataToMongo = (filePath: string, fileName: string) => {
     });
 
   stream.pipe(csvStream);
-  return { err: NewCommonError(code.SUCCESS) };
+  return { err: NewCommonError(code.CREATED) };
 };
 
-const fetchFilesfromMongo = async () => {
+const fetchFilesfromMongo = async (user_id: ObjectId) => {
   try {
-    const res = await File.find({}).sort("-import_date");
+    const res = await File.find({ user_id }).sort("-import_date");
     return { data: res, err: NewCommonError(code.SUCCESS) };
   } catch (err) {
-    return { data: err, err: NewCommonError(code.ERR_INTERNAL) };
+    throw Error("ERR_INTERNAL");
   }
 };
 
@@ -223,9 +211,10 @@ const deleteDatafromMongo = async (fileId: string) => {
     await Household.deleteMany({ file_id: fileId });
     await Member.deleteMany({ file_id: fileId });
     await Inconsist.deleteMany({ file_id: fileId });
+
     return { err: NewCommonError(code.SUCCESS) };
   } catch (err) {
-    return { err: NewCommonError(code.ERR_INTERNAL) };
+    throw Error("ERR_INTERNAL");
   }
 };
 

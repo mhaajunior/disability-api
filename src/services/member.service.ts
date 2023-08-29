@@ -1,9 +1,9 @@
-import { NewCommonError } from "../models/dto/error.dto";
+import mongoose from "mongoose";
+import { NewCommonError } from "../helpers/commom.helper";
 import Household from "../models/schemas/household.schema";
 import Member from "../models/schemas/member.schema";
 import Inconsist from "../models/schemas/inconsist.schema";
 import code from "../resource/common.code";
-import mongoose from "mongoose";
 import { IMember } from "../models/dto/disability.dto";
 
 const fetchMembersfromMongo = async (file_id: string, iden: string) => {
@@ -33,7 +33,7 @@ const fetchMembersfromMongo = async (file_id: string, iden: string) => {
 
     return { data, err: NewCommonError(code.SUCCESS) };
   } catch (err) {
-    return { data: err, err: NewCommonError(code.ERR_INTERNAL) };
+    throw Error("ERR_INTERNAL");
   }
 };
 
@@ -71,7 +71,7 @@ const fetchMemberByIdfromMongo = async (member_id: string) => {
 
     return { data, err: NewCommonError(code.SUCCESS) };
   } catch (err) {
-    return { data: err, err: NewCommonError(code.ERR_INTERNAL) };
+    throw Error("ERR_INTERNAL");
   }
 };
 
@@ -93,7 +93,7 @@ const updateMemberToMongo = async (member_id: string, member_form: IMember) => {
 
     return { data, err: NewCommonError(code.SUCCESS) };
   } catch (err) {
-    return { data: err, err: NewCommonError(code.ERR_INTERNAL) };
+    throw Error("ERR_INTERNAL");
   }
 };
 

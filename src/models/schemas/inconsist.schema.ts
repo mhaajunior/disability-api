@@ -1,6 +1,7 @@
 import mongoose, { Schema } from "mongoose";
+import { IMemberError } from "../dto/error.dto";
 
-const inconsistSchema = new Schema({
+const inconsistSchema = new Schema<IMemberError>({
   member_id: { type: String, required: true },
   iden: { type: String, required: true },
   file_id: { type: String, required: true },
@@ -141,4 +142,4 @@ const inconsistSchema = new Schema({
   },
 });
 
-export default mongoose.model("Inconsist", inconsistSchema);
+export default mongoose.model<IMemberError>("Inconsist", inconsistSchema);

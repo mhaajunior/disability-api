@@ -1,12 +1,12 @@
+import mongoose from "mongoose";
 import File from "../models/schemas/file.schema";
 import Inconsist from "../models/schemas/inconsist.schema";
 import code from "../resource/common.code";
 import {
+  IErrorBetMem,
   IInconsist,
   IMemberError,
-  NewCommonError,
 } from "../models/dto/error.dto";
-import mongoose from "mongoose";
 import {
   validateStep1,
   validateStep10,
@@ -20,18 +20,13 @@ import {
   validateStep8,
   validateStep9,
 } from "../helpers/consistency.helper";
-
-interface IErrorBetMem {
-  leadAge: number;
-  checkH19: boolean;
-  checkH11: boolean;
-}
+import { NewCommonError } from "../helpers/commom.helper";
 
 const aggregateFile = async (file_id: string) => {
   try {
     const file = await File.find({ _id: file_id });
     if (!file) {
-      return { data: null, err: NewCommonError(code.FILE_NOT_FOUND) };
+      throw Error("FILE_NOT_FOUND");
     }
 
     const ObjectId = mongoose.Types.ObjectId;
@@ -69,8 +64,8 @@ const aggregateFile = async (file_id: string) => {
     ]);
 
     return { data: result[0], err: NewCommonError(code.SUCCESS) };
-  } catch (err) {
-    return { data: err, err: NewCommonError(code.ERR_INTERNAL) };
+  } catch (err: any) {
+    throw Error(err.message);
   }
 };
 
@@ -84,9 +79,9 @@ const upsertErrorRow = async (obj: IMemberError) => {
         upsert: true, // Make this update into an upsert
       }
     );
-    return { err: NewCommonError(code.SUCCESS) };
+    return { err: NewCommonError(code.CREATED) };
   } catch (err) {
-    return { err: NewCommonError(code.ERR_INTERNAL) };
+    throw Error("ERR_INTERNAL");
   }
 };
 
@@ -95,7 +90,7 @@ const updateFileStatus = async (param: string, status: string) => {
     await File.findOneAndUpdate({ _id: param }, { $set: { status } });
     return { err: NewCommonError(code.SUCCESS) };
   } catch (err) {
-    return { err: NewCommonError(code.ERR_INTERNAL) };
+    throw Error("ERR_INTERNAL");
   }
 };
 
@@ -107,7 +102,7 @@ const deleteErrorRow = async (member_id: string) => {
     }
     return { err: NewCommonError(code.SUCCESS) };
   } catch (err) {
-    return { err: NewCommonError(code.ERR_INTERNAL) };
+    throw Error("ERR_INTERNAL");
   }
 };
 
@@ -121,11 +116,15 @@ const findAndUpdateFile = async (file_id: string) => {
     }
     return { err: NewCommonError(code.SUCCESS) };
   } catch (err) {
-    return { err: NewCommonError(code.ERR_INTERNAL) };
+    throw Error("ERR_INTERNAL");
   }
 };
 
-const fetchHouseholdViaStatus = async (file_id: string) => {
+const fetchHouseholdViaStatus = async (
+  file_id: string,
+  page_no: number,
+  per_page: number
+) => {
   try {
     const res = await File.find({ _id: file_id });
     if (res) {
@@ -163,30 +162,46 @@ const fetchHouseholdViaStatus = async (file_id: string) => {
           },
           { $unwind: "$households" },
           {
-            $project: {
-              editDatetime: {
-                $dateToString: {
-                  format: "%Y-%m-%d %H:%M:%S",
-                  date: "$households.edit_datetime",
-                  timezone: "Asia/Bangkok",
+            $facet: {
+              stage1: [{ $group: { _id: 0, count: { $sum: 1 } } }],
+              stage2: [
+                {
+                  $project: {
+                    editDatetime: {
+                      $dateToString: {
+                        format: "%Y-%m-%d %H:%M:%S",
+                        date: "$households.edit_datetime",
+                        timezone: "Asia/Bangkok",
+                      },
+                    },
+                    totalMemErrors: 1,
+                    overallErrors: 1,
+                    _id: 1,
+                  },
                 },
-              },
-              totalMemErrors: 1,
-              overallErrors: 1,
-              _id: 1,
+                { $sort: { _id: 1 } },
+                { $skip: (page_no - 1) * per_page },
+                { $limit: per_page },
+              ],
             },
           },
-          { $sort: { _id: 1 } },
+          { $unwind: "$stage1" },
+          {
+            $project: {
+              count: "$stage1.count",
+              result: "$stage2",
+            },
+          },
         ]);
-        return { data: inconsist, err: NewCommonError(code.SUCCESS) };
+        return { data: inconsist[0], err: NewCommonError(code.SUCCESS) };
       } else {
         return { data: "success", err: NewCommonError(code.SUCCESS) };
       }
     } else {
-      return { data: null, err: NewCommonError(code.FILE_NOT_FOUND) };
+      throw Error("FILE_NOT_FOUND");
     }
-  } catch (err) {
-    return { data: null, err: NewCommonError(code.ERR_INTERNAL) };
+  } catch (err: any) {
+    throw Error(err.message);
   }
 };
 
@@ -299,59 +314,27 @@ const consistencyCheck = async (
     total_errors += checkStep11.codes.length;
   }
 
-  if (Object.keys(errors).length > 0) {
-    const errorsObj: IMemberError = {
-      member_id: member._id,
-      iden: member.iden,
-      file_id: member.file_id,
-      total_errors,
-      inconsist: errors,
-    };
-    //upsert error to mongo and update file, household, member status to error
-    try {
+  try {
+    if (Object.keys(errors).length > 0) {
+      const errorsObj: IMemberError = {
+        member_id: member._id,
+        iden: member.iden,
+        file_id: member.file_id,
+        total_errors,
+        inconsist: errors,
+      };
+      //upsert error to mongo and update file, household, member status to error
+
       await upsertErrorRow(errorsObj);
       return { err: NewCommonError(code.SUCCESS) };
-    } catch (err) {
-      return { err: NewCommonError(code.ERR_INTERNAL) };
-    }
-  } else {
-    // check if having previous error in db, delete it
-    try {
+    } else {
+      // check if having previous error in db, delete it
       await deleteErrorRow(member._id);
       return { err: NewCommonError(code.SUCCESS) };
-    } catch (err) {
-      return { err: NewCommonError(code.ERR_INTERNAL) };
     }
+  } catch (err) {
+    throw Error("ERR_INTERNAL");
   }
-};
-
-const checkBetweenMembers = (members: any) => {
-  let checkH19,
-    checkH11 = false;
-  let leadAge = 0;
-  for (const member of members) {
-    if (member.fields.step1.f4 === "01") {
-      leadAge = parseInt(member.fields.step1.f6);
-    }
-    if (!checkH19) {
-      if (
-        ["01", "09"].includes(member.fields.step10.f136) ||
-        ["02", "03", "04", "05", "06", "07", "08", "09", "10"].includes(
-          member.fields.step10.f137
-        )
-      ) {
-        checkH19 = true;
-      }
-    }
-    if (!checkH11) {
-      if (member.fields.step10.f131 === "2") {
-        checkH11 = true;
-      }
-    }
-  }
-
-  const data: IErrorBetMem = { checkH19, checkH11, leadAge };
-  return data;
 };
 
 export {
@@ -362,5 +345,4 @@ export {
   findAndUpdateFile,
   fetchHouseholdViaStatus,
   consistencyCheck,
-  checkBetweenMembers,
 };

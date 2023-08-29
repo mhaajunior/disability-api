@@ -1,39 +1,44 @@
-import { Request, Response } from "express";
+import { Response } from "express";
 import { dirname } from "path";
+import asyncHandler from "express-async-handler";
 import * as disableService from "../services/disable.service";
 import { HttpStatusCode } from "../resource/common.code";
-import code from "../resource/common.code";
-import { NewCommonError } from "../models/dto/error.dto";
+import { IRequest } from "../models/dto/request.dto";
 
 const appDir = dirname(require.main.filename);
 
-const importDisable = (req: Request, res: Response) => {
+const importDisable = asyncHandler(async (req: IRequest, res: Response) => {
   const file = req.file;
+  const user_id = req.user._id;
 
-  if (!file) {
-    const err = NewCommonError(code.IMPORT_FILE_NOT_VALID);
-    res.status(HttpStatusCode[<number>err.code]).send({ ...err });
+  if (!file || file.mimetype !== "text/csv") {
+    throw Error("IMPORT_FILE_NOT_VALID");
   }
 
-  const { err } = disableService.uploadDataToMongo(
+  const { err } = await disableService.uploadDataToMongo(
     appDir + "/uploads/" + file.filename,
-    file.originalname
+    file.originalname,
+    user_id
   );
 
-  res.status(HttpStatusCode[<number>err.code]).send({ ...err });
-};
+  res.status(HttpStatusCode[<number>err.code]).send({ user_id, ...err });
+});
 
-const fetchDisables = async (req: Request, res: Response) => {
-  const { data, err } = await disableService.fetchFilesfromMongo();
+const fetchDisables = asyncHandler(async (req: IRequest, res: Response) => {
+  const user_id = req.user._id;
 
-  res.status(HttpStatusCode[<number>err.code]).send({ data, ...err });
-};
+  const { data, err } = await disableService.fetchFilesfromMongo(user_id);
 
-const deleteDisable = async (req: Request, res: Response) => {
+  const obj: any = { files: data, user_id };
+
+  res.status(HttpStatusCode[<number>err.code]).send({ data: obj, ...err });
+});
+
+const deleteDisable = asyncHandler(async (req: IRequest, res: Response) => {
   const file_id = req.params.id;
   const { err } = await disableService.deleteDatafromMongo(file_id);
 
   res.status(HttpStatusCode[<number>err.code]).send({ ...err });
-};
+});
 
 export { importDisable, fetchDisables, deleteDisable };

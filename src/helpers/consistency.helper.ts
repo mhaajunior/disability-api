@@ -1,3 +1,4 @@
+import { IErrorBetMem } from "../models/dto/error.dto";
 import {
   IStep1,
   IStep10,
@@ -2710,6 +2711,35 @@ const validateStep11 = (
   return { codes: err_code, fields: [...new Set(err_field)] };
 };
 
+const checkBetweenMembers = (members: any) => {
+  let checkH19,
+    checkH11 = false;
+  let leadAge = 0;
+  for (const member of members) {
+    if (member.fields.step1.f4 === "01") {
+      leadAge = parseInt(member.fields.step1.f6);
+    }
+    if (!checkH19) {
+      if (
+        ["01", "09"].includes(member.fields.step10.f136) ||
+        ["02", "03", "04", "05", "06", "07", "08", "09", "10"].includes(
+          member.fields.step10.f137
+        )
+      ) {
+        checkH19 = true;
+      }
+    }
+    if (!checkH11) {
+      if (member.fields.step10.f131 === "2") {
+        checkH11 = true;
+      }
+    }
+  }
+
+  const data: IErrorBetMem = { checkH19, checkH11, leadAge };
+  return data;
+};
+
 export {
   validateStep1,
   validateStep2,
@@ -2722,4 +2752,5 @@ export {
   validateStep9,
   validateStep10,
   validateStep11,
+  checkBetweenMembers,
 };
